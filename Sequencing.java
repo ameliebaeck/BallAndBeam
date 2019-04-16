@@ -76,6 +76,15 @@ public class Sequencing extends Thread{
 		System.out.println("BIG ball detected");
 	}
 	
+	public void setRefGen(ReferenceGenerator referenceGenerator) {
+		// Written by you
+		this.referenceGenerator = referenceGenerator;
+	}
+	public void setRegul(Regul regul) {
+		// Written by you
+		this.Regul = regul;
+	}
+	
 	public void run() {
 		setPriority(priority);
 		mutex.take();
