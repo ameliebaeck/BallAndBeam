@@ -45,6 +45,8 @@ public class Regul extends Thread {
 	private double phiref;
 	private double v;
 	
+	private boolean pitch;
+	
 
 	// Inner monitor class
 	class ModeMonitor {
@@ -176,6 +178,16 @@ public class Regul extends Thread {
 		}
 		return y2;
 	}
+	
+	//Get pitch value. Called from Sequencing
+	public boolean getPitch (){
+		try {
+			pitch = digitalInPosition.get();
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return pitch;
+	}
 
 	public void run() {
 		long duration;
@@ -227,11 +239,12 @@ public class Regul extends Thread {
 				// Written by you.
 				// Should include a call to sendDataToOpCom
 				
-				try {
+				/*try {
 					y = analogInPosition.get();
 				} catch (Exception e) {
 					System.out.println(e);
-				}
+				}*/
+				
 				yref = referenceGenerator.getRef();				
 				
 				try {
@@ -310,11 +323,12 @@ public class Regul extends Thread {
 			}
 			case BEAMPOS:{
 				
-				try {
+				/*try {
 					y = analogInPosition.get();
 				} catch (Exception e) {
 					System.out.println(e);
-				}
+				}*/
+				
 				try {
 					y2 = analogInAngle.get();
 					//System.out.println(y2);
