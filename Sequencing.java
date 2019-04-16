@@ -191,7 +191,24 @@ public class Sequencing extends Thread{
 				
 			}
 			case MEDIUM: {
-				
+
+				regul.setBEAMMode();
+				refgen.setRef(5);
+				try {
+					while(0 < regul.getAnalogInPosition()) {
+					}
+				} catch (Exception e) {
+					System.out.println(e);
+				}
+				refgen.setRef(-5);
+				try {
+					while(5 > regul.getAnalogInPosition()) {
+					}
+				} catch (Exception e) {
+					System.out.println(e);
+				}
+				refgen.setRef(5);
+
 			}
 			case BIG: {
 				//Drop ball on the floor
