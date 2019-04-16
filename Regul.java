@@ -2,6 +2,8 @@
 import se.lth.control.DoublePoint;
 import se.lth.control.realtime.AnalogIn;
 import se.lth.control.realtime.AnalogOut;
+import se.lth.control.realtime.DigitalIn;
+import se.lth.control.realtime.DigitalOut;
 import se.lth.control.realtime.IOChannelException;
 import se.lth.control.realtime.Semaphore;
 
@@ -16,6 +18,7 @@ public class Regul extends Thread {
 	private AnalogIn analogInAngle;
 	private AnalogIn analogInPosition;
 	private AnalogOut analogOut;
+	private DigitalIn digitalInPosition;
 
 	private ReferenceGenerator referenceGenerator;
 	private OpCom opcom;
@@ -27,8 +30,8 @@ public class Regul extends Thread {
 
 	private ModeMonitor modeMon;
 
-	private final double min = -10.0;
-	private final double max = 10.0;
+	private final double min = -10;
+	private final double max = 10;
 
 	private double u;
 	private double u2;
@@ -39,7 +42,7 @@ public class Regul extends Thread {
 	private double uff;
 	private double phiref;
 	private double v;
-	private int test;
+	
 
 	// Inner monitor class
 	class ModeMonitor {
@@ -63,6 +66,7 @@ public class Regul extends Thread {
 		try {
 			analogInAngle = new AnalogIn(0);
 			analogInPosition = new AnalogIn(1);
+			digitalInPosition = new DigitalIn(0);
 			analogOut = new AnalogOut(0);
 		} catch (IOChannelException e) {
 			System.out.print("Error: IOChannelException: ");
@@ -161,6 +165,7 @@ public class Regul extends Thread {
 		
 		setPriority(priority);
 		mutex.take();
+		int passage = 0;
 		while (WeShouldRun) {
 			switch (modeMon.getMode()) {
 			case OFF: {
@@ -198,6 +203,15 @@ public class Regul extends Thread {
 				
 				break;
 			}
+			
+			//case GETPOS:{
+				//// Code for the OFF mode. 
+				//// Written by you.
+				//// Should include resetting the controllers
+				//// Should include a call to sendDataToOpCom  
+				
+				//break;
+			//}
 			case BEAM: {
 				// Code for the BEAM mode
 				// Written by you.
@@ -205,18 +219,35 @@ public class Regul extends Thread {
 				
 				try {
 					y = analogInPosition.get();
-
 				} catch (Exception e) {
 					System.out.println(e);
 				}
-				yref = referenceGenerator.getRef();				
-				
 				try {
 					y2 = analogInAngle.get();
+					//System.out.println(y2);
 				} catch (Exception e) {
 					System.out.println(e);
 				}
 				
+				
+				
+				try  {
+					if(passage==0) {
+					if(digitalInPosition.get()){
+					
+						yref = yref-0.004;
+						//yref = yref+((yref-y2)/(Math.abs(yref-y2)))*0.005;
+					}else{
+						passage +=1;
+						yref=y2-.17;
+					}
+				}
+				} catch (Exception e) {
+				}
+				
+				
+				System.out.println("yref: " + (yref));
+				System.out.println("y2: " + (y2));
 				//uff = referenceGenerator.getUff();
 					
 				synchronized(inner) {

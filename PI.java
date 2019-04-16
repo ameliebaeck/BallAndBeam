@@ -20,13 +20,13 @@ public class PI {
 		//Create reference to PIParameters and initialize parameters
 		PIParameters p = new PIParameters();
 		//Doubles
-		p.K = 0.5;
-		p.Ti = 0.0;
+		p.K = 3;
+		p.Ti = 0.3;
 		p.Tr = 10.0;
 		p.Beta = 1.0;
 		p.H = 0.02; //Sampling interval in seconds
 		
-		p.Td = 0.1;
+		p.Td = 0.2;
 		p.N = 10.0;
 		
 		//Boolean
@@ -49,6 +49,7 @@ public class PI {
 		this.y = y;
 		this.e = yref - y;
 		this.D = ad * D - bd * (y - yOld);
+		this.yOld = y;
 		this.v = p.K * (p.Beta * yref - y) + I + D;
 		return this.v;
 	}
