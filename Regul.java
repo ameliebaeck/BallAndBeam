@@ -7,10 +7,12 @@ import se.lth.control.realtime.DigitalOut;
 import se.lth.control.realtime.IOChannelException;
 import se.lth.control.realtime.Semaphore;
 
+
 public class Regul extends Thread {
 	public static final int OFF = 0;
 	public static final int BEAM = 1;
 	public static final int BALL = 2;
+	public static final int BEAMPOS = 3;
 
 	private PI inner = new PI("PI");
 	private PID outer = new PID("PID");
@@ -30,8 +32,8 @@ public class Regul extends Thread {
 
 	private ModeMonitor modeMon;
 
-	private final double min = -10;
-	private final double max = 10;
+	private final double min = -10.0;
+	private final double max = 10.0;
 
 	private double u;
 	private double u2;
@@ -59,15 +61,16 @@ public class Regul extends Thread {
 			return mode;
 		}
 	}
-
+	
+	//Constructor
 	public Regul(int pri) {
 		priority = pri;
 		mutex = new Semaphore(1);
 		try {
 			analogInAngle = new AnalogIn(0);
 			analogInPosition = new AnalogIn(1);
-			digitalInPosition = new DigitalIn(0);
 			analogOut = new AnalogOut(0);
+			digitalInPosition = new DigitalIn(0);
 		} catch (IOChannelException e) {
 			System.out.print("Error: IOChannelException: ");
 			System.out.println(e.getMessage());
@@ -133,6 +136,12 @@ public class Regul extends Thread {
 		modeMon.setMode(2);
 		System.out.println("Controller in BALL mode.");
 	}
+	
+	public void setBEAMPOSMode() {
+		// Written by you
+		modeMon.setMode(3);
+		System.out.println("Controller in BEAMPOS mode.");
+	}
 
 	public int getMode() {
 		// Written by you
@@ -156,6 +165,16 @@ public class Regul extends Thread {
 			v = max;
 		}
 		return v;
+	}
+	
+	//Get angle. Called from Sequencing
+	public double getAngle (){
+		try {
+			y2 = analogInAngle.get();
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return y2;
 	}
 
 	public void run() {
@@ -203,15 +222,6 @@ public class Regul extends Thread {
 				
 				break;
 			}
-			
-			//case GETPOS:{
-				//// Code for the OFF mode. 
-				//// Written by you.
-				//// Should include resetting the controllers
-				//// Should include a call to sendDataToOpCom  
-				
-				//break;
-			//}
 			case BEAM: {
 				// Code for the BEAM mode
 				// Written by you.
@@ -222,32 +232,14 @@ public class Regul extends Thread {
 				} catch (Exception e) {
 					System.out.println(e);
 				}
+				yref = referenceGenerator.getRef();				
+				
 				try {
 					y2 = analogInAngle.get();
-					//System.out.println(y2);
 				} catch (Exception e) {
 					System.out.println(e);
 				}
 				
-				
-				
-				try  {
-					if(passage==0) {
-					if(digitalInPosition.get()){
-					
-						yref = yref-0.004;
-						//yref = yref+((yref-y2)/(Math.abs(yref-y2)))*0.005;
-					}else{
-						passage +=1;
-						yref=y2-.17;
-					}
-				}
-				} catch (Exception e) {
-				}
-				
-				
-				System.out.println("yref: " + (yref));
-				System.out.println("y2: " + (y2));
 				//uff = referenceGenerator.getUff();
 					
 				synchronized(inner) {
@@ -316,6 +308,58 @@ public class Regul extends Thread {
 				
 				break;
 			}
+			case BEAMPOS:{
+				
+				try {
+					y = analogInPosition.get();
+				} catch (Exception e) {
+					System.out.println(e);
+				}
+				try {
+					y2 = analogInAngle.get();
+					//System.out.println(y2);
+				} catch (Exception e) {
+					System.out.println(e);
+				}
+				
+				try  {
+					if(passage==0) {
+					if(digitalInPosition.get()){
+					
+						yref = yref-0.004;
+						//yref = yref+((yref-y2)/(Math.abs(yref-y2)))*0.005;
+					}else{
+						passage +=1;
+						yref=y2-.17;
+					}
+				}
+				} catch (Exception e) {
+					System.out.println(e);
+				}
+				
+				//System.out.println("yref: " + (yref));
+				//System.out.println("y2: " + (y2));
+				
+				//uff = referenceGenerator.getUff();
+					
+				synchronized(inner) {
+					v = inner.calculateOutput(y2, yref);
+					//u2 = limit(v+uff, min, max);
+					u2 = limit(v, min, max);
+					try {
+						analogOut.set(u2);
+					} catch (Exception e) {
+						System.out.println(e);
+					}
+					
+					//inner.updateState(u2-uff);
+					inner.updateState(u2);
+				}
+				
+				sendDataToOpCom(yref,y2,u2);
+				
+				break;
+			}
 			default: {
 				System.out.println("Error: Illegal mode.");
 				break;
@@ -323,9 +367,8 @@ public class Regul extends Thread {
 			}
 
 	// sleep
-	t=t+inner.getHMillis();duration=t-System.currentTimeMillis();if(duration>0)
-
-	{
+	t=t+inner.getHMillis();duration=t-System.currentTimeMillis();
+	if(duration>0){
 		try {
 			sleep(duration);
 		} catch (InterruptedException x) {
