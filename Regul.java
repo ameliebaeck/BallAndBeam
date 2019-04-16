@@ -39,7 +39,7 @@ public class Regul extends Thread {
 	private double uff;
 	private double phiref;
 	private double v;
-	
+	private int test;
 
 	// Inner monitor class
 	class ModeMonitor {
@@ -205,6 +205,7 @@ public class Regul extends Thread {
 				
 				try {
 					y = analogInPosition.get();
+
 				} catch (Exception e) {
 					System.out.println(e);
 				}
