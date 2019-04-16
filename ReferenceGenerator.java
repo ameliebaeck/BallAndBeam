@@ -169,7 +169,7 @@ public class ReferenceGenerator extends Thread {
 		new RefGUI(amplitude, period);
 	}
 	
-	private synchronized void setRef(double newRef) {
+	public synchronized void setRef(double newRef) {
 		ref = newRef;
 	}
 	
@@ -202,7 +202,8 @@ public class ReferenceGenerator extends Thread {
 	
 	public synchronized double getRef() 
 	{
-		return (mode == MANUAL) ? manual : ref;
+		//return (mode == MANUAL) ? manual : ref;
+		return ref;
 	}
 	
 	public synchronized double getUff() 
@@ -234,8 +235,8 @@ public class ReferenceGenerator extends Thread {
 		try {
 		    while (!isInterrupted()) {
 				now = 0.001 * (double) timebase;
-				synchronized (this) {
-				    if (mode == MANUAL) {
+				/*synchronized (this) {
+				    /*if (mode == MANUAL) {
 					setpoint = manual;
 					ref = manual;
 				    } else {
@@ -287,7 +288,7 @@ public class ReferenceGenerator extends Thread {
 						}
 					}
 				    }
-				}				
+				}*/				
 				timebase += h;
 				duration = timebase - System.currentTimeMillis();
 				if (duration > 0) {
